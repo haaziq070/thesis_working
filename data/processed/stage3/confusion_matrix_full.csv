@@ -1,0 +1,15 @@
+,Benign,Botnet_ARES,DDoS_LOIT,DoS_GoldenEye,DoS_Hulk,DoS_Slowhttptest,DoS_Slowloris,FTP-Patator,Heartbleed,Port_Scan,SSH-Patator,Web_Brute_Force,Web_SQL_Injection,Web_XSS
+Benign,27271,0,334,0,23,14,1,0,329,1813,134,28,0,54
+Botnet_ARES,161,421,0,0,0,0,0,0,0,1071,0,0,0,0
+DDoS_LOIT,22,0,28698,0,0,0,0,0,0,0,0,0,0,0
+DoS_GoldenEye,206,0,0,2148,14,129,13,0,0,0,0,0,0,0
+DoS_Hulk,24333,0,0,149,80109,182,0,0,0,0,0,0,0,0
+DoS_Slowhttptest,760,0,0,0,14,1276,7,0,0,0,0,0,0,1
+DoS_Slowloris,653,0,0,10,0,261,630,0,0,0,0,0,0,0
+FTP-Patator,1499,0,0,0,0,0,0,1361,0,0,0,0,0,0
+Heartbleed,2,0,0,0,0,0,0,0,2,0,0,0,0,0
+Port_Scan,56,0,0,1,0,0,0,0,0,48335,0,3,0,2
+SSH-Patator,67,0,0,0,0,0,0,0,0,0,1718,0,0,0
+Web_Brute_Force,392,0,0,0,0,0,0,0,0,0,0,228,0,201
+Web_SQL_Injection,1,0,0,1,0,0,0,0,0,0,0,0,6,0
+Web_XSS,212,0,0,0,0,0,0,0,0,0,0,80,0,116

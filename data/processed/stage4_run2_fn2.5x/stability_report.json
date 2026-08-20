@@ -1,0 +1,7 @@
+{
+  "val_f1_first_third_mean": 0.8881519525996108,
+  "val_f1_last_third_mean": 0.8720334862740835,
+  "val_f1_last_third_std": 0.028062916417461888,
+  "val_reward_first_third_mean": 54.110000000000014,
+  "val_reward_last_third_mean": 47.37000000000001
+}

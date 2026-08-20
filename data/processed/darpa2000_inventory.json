@@ -1,0 +1,117 @@
+{
+  "report": {
+    "LLS_DDOS_1.0": {
+      "tcpdump_inside": {
+        "1": {
+          "truth_xml_bytes": 18661,
+          "dump_bytes": 3056,
+          "list_bytes": 3472
+        },
+        "2": {
+          "truth_xml_bytes": 19895,
+          "dump_bytes": 18548,
+          "list_bytes": 3584
+        },
+        "3": {
+          "truth_xml_bytes": 22145,
+          "dump_bytes": 40057,
+          "list_bytes": 3920
+        },
+        "4": {
+          "truth_xml_bytes": 13899,
+          "dump_bytes": 235253,
+          "list_bytes": 2464
+        },
+        "5": {
+          "truth_xml_bytes": 21367467,
+          "dump_bytes": 5926943,
+          "list_bytes": 3780457
+        }
+      },
+      "tcpdump_dmz": {
+        "1": {
+          "truth_xml_bytes": 468952,
+          "dump_bytes": 59676,
+          "list_bytes": 87920
+        },
+        "2": {
+          "truth_xml_bytes": 15600,
+          "dump_bytes": 16632,
+          "list_bytes": 2800
+        },
+        "3": {
+          "truth_xml_bytes": 49988,
+          "dump_bytes": 89451,
+          "list_bytes": 8960
+        },
+        "4": {
+          "truth_xml_bytes": 11880,
+          "dump_bytes": 235234,
+          "list_bytes": 2128
+        },
+        "5": {
+          "truth_xml_bytes": 21262568,
+          "dump_bytes": 2971914,
+          "list_bytes": 3797929
+        }
+      }
+    },
+    "LLS_DDOS_2.0.2": {
+      "tcpdump_inside": {
+        "1": {
+          "truth_xml_bytes": 1273,
+          "dump_bytes": 562,
+          "list_bytes": 224
+        },
+        "2": {
+          "truth_xml_bytes": 2541,
+          "dump_bytes": 3364,
+          "list_bytes": 448
+        },
+        "3": {
+          "truth_xml_bytes": 1273,
+          "dump_bytes": 47891,
+          "list_bytes": 224
+        },
+        "4": {
+          "truth_xml_bytes": 5685,
+          "dump_bytes": 65409,
+          "list_bytes": 1008
+        },
+        "5": {
+          "truth_xml_bytes": 3145,
+          "dump_bytes": 81753,
+          "list_bytes": 560
+        }
+      },
+      "tcpdump_dmz": {
+        "1": {
+          "truth_xml_bytes": 1259,
+          "dump_bytes": 562,
+          "list_bytes": 224
+        },
+        "2": {
+          "truth_xml_bytes": 2509,
+          "dump_bytes": 3364,
+          "list_bytes": 448
+        },
+        "3": {
+          "truth_xml_bytes": 1259,
+          "dump_bytes": 47536,
+          "list_bytes": 224
+        },
+        "4": {
+          "truth_xml_bytes": 636,
+          "dump_bytes": 6483,
+          "list_bytes": 112
+        },
+        "5": {
+          "truth_xml_bytes": 636,
+          "dump_bytes": 56448,
+          "list_bytes": 112
+        }
+      }
+    }
+  },
+  "problems": []
+}

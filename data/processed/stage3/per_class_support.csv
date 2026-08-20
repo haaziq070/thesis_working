@@ -1,0 +1,15 @@
+,train_n,test_n
+DoS_Hulk,244467,104773
+Port_Scan,112926,48397
+Benign,69996,30001
+DDoS_LOIT,67013,28720
+FTP-Patator,6671,2860
+DoS_GoldenEye,5854,2510
+DoS_Slowhttptest,4802,2058
+SSH-Patator,4164,1785
+Botnet_ARES,3855,1653
+DoS_Slowloris,3623,1554
+Web_Brute_Force,1913,821
+Web_XSS,950,408
+Web_SQL_Injection,16,8
+Heartbleed,8,4

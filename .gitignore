@@ -1,0 +1,17 @@
+# Virtualenv — reproducible from requirements.txt / README setup instructions
+venv/
+
+# Raw datasets — multi-GB, reproducible via scripts/stage1_download_*.sh and
+# docs/stage1_manual_downloads.md; several individual files here exceed
+# GitHub's 100MB hard per-file limit anyway
+data/raw/
+
+# Trained model binaries — regenerable via the documented scripts; not
+# diff-friendly, and two of them (Stage 3b's) exceed GitHub's 100MB limit.
+# The small, reviewable result artifacts (CSVs, JSON reports, PNGs,
+# confusion matrices, training curves) in data/processed/ are kept.
+*.joblib
+
+# Python bytecode cache
+__pycache__/
+*.pyc

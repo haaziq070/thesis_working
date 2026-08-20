@@ -1,0 +1,104 @@
+{
+  "dqn": {
+    "adjusted_rand_index": 0.08061386396373661,
+    "n_predicted_clusters": 17,
+    "kill_chain_completeness": {
+      "LLS_DDOS_1.0": {
+        "true_stages": [
+          "action",
+          "exploit",
+          "install",
+          "recon"
+        ],
+        "captured_stages": [
+          "action",
+          "exploit",
+          "install",
+          "recon"
+        ],
+        "completeness": 1.0,
+        "n_true_events": 150,
+        "n_predicted_clusters_touched": 14,
+        "fragmentation": true
+      },
+      "LLS_DDOS_2.0.2": {
+        "true_stages": [
+          "action",
+          "exploit",
+          "install",
+          "recon"
+        ],
+        "captured_stages": [
+          "exploit",
+          "install",
+          "recon"
+        ],
+        "completeness": 0.75,
+        "n_true_events": 32,
+        "n_predicted_clusters_touched": 3,
+        "fragmentation": true
+      }
+    },
+    "pairwise": {
+      "tp_pairs": 2425,
+      "fp_pairs": 5213,
+      "fn_pairs": 9246,
+      "precision": 0.3174914899188269,
+      "recall": 0.2077799674406649,
+      "f1": 0.2511782070537055,
+      "n_predicted_pairs": 7638,
+      "n_true_pairs": 11671
+    }
+  },
+  "rule_based_baseline": {
+    "adjusted_rand_index": 0.036935283282148845,
+    "n_predicted_clusters": 5,
+    "kill_chain_completeness": {
+      "LLS_DDOS_1.0": {
+        "true_stages": [
+          "action",
+          "exploit",
+          "install",
+          "recon"
+        ],
+        "captured_stages": [
+          "exploit",
+          "install",
+          "recon"
+        ],
+        "completeness": 0.75,
+        "n_true_events": 150,
+        "n_predicted_clusters_touched": 4,
+        "fragmentation": true
+      },
+      "LLS_DDOS_2.0.2": {
+        "true_stages": [
+          "action",
+          "exploit",
+          "install",
+          "recon"
+        ],
+        "captured_stages": [
+          "action",
+          "exploit",
+          "install",
+          "recon"
+        ],
+        "completeness": 1.0,
+        "n_true_events": 32,
+        "n_predicted_clusters_touched": 1,
+        "fragmentation": false
+      }
+    },
+    "pairwise": {
+      "tp_pairs": 8711,
+      "fp_pairs": 26063,
+      "fn_pairs": 2960,
+      "precision": 0.2505032495542647,
+      "recall": 0.7463799160311884,
+      "f1": 0.375110345570029,
+      "n_predicted_pairs": 34774,
+      "n_true_pairs": 11671
+    }
+  }
+}

@@ -1,0 +1,7 @@
+campaign_id,split
+cicids2017_fri_c0,train
+cicids2017_tue_c0,train
+cicids2017_wed_c0,train
+cicids2017_wed_c1,train
+cicids2017_thu_c0,val
+cicids2017_tue_c1,val

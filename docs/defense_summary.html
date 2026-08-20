@@ -1,0 +1,427 @@
+<title>Correlation Defense Brief</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Expanded:wght@600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root {
+    --paper-50: #f7f4ee;
+    --paper-100: #efe8da;
+    --paper-200: #e2d9c6;
+    --ink-950: #1b1a17;
+    --ink-800: #35322c;
+    --ink-600: #5c5749;
+    --ink-400: #8c8574;
+    --accent: #a8631f;
+    --accent-strong: #8a4f15;
+    --signal-teal: #2f6b63;
+    --signal-teal-strong: #1f4f49;
+    --rule: #d8cfb9;
+    --code-bg: #ece4d1;
+
+    --bg: var(--paper-50);
+    --surface: #fffdf8;
+    --surface-2: var(--paper-100);
+    --text: var(--ink-950);
+    --text-dim: var(--ink-600);
+    --text-faint: var(--ink-400);
+    --border: var(--rule);
+    --accent-fg: var(--accent);
+    --accent-bg: #f3e3cf;
+    --teal-fg: var(--signal-teal);
+    --teal-bg: #e1ebe7;
+    --code-fg: #4a4230;
+    --code-bg-tok: var(--code-bg);
+    --shadow: 0 1px 2px rgba(27,26,23,0.06), 0 6px 20px -8px rgba(27,26,23,0.12);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #15130f;
+      --surface: #1d1a15;
+      --surface-2: #262219;
+      --text: #f1ece0;
+      --text-dim: #c3b9a3;
+      --text-faint: #8c8571;
+      --border: #3a3427;
+      --accent-fg: #e0a45a;
+      --accent-bg: #3a2c17;
+      --teal-fg: #6fb3a8;
+      --teal-bg: #1c332f;
+      --code-fg: #ddceac;
+      --code-bg-tok: #2a2519;
+      --shadow: 0 1px 2px rgba(0,0,0,0.4), 0 10px 30px -10px rgba(0,0,0,0.6);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #15130f;
+    --surface: #1d1a15;
+    --surface-2: #262219;
+    --text: #f1ece0;
+    --text-dim: #c3b9a3;
+    --text-faint: #8c8571;
+    --border: #3a3427;
+    --accent-fg: #e0a45a;
+    --accent-bg: #3a2c17;
+    --teal-fg: #6fb3a8;
+    --teal-bg: #1c332f;
+    --code-fg: #ddceac;
+    --code-bg-tok: #2a2519;
+    --shadow: 0 1px 2px rgba(0,0,0,0.4), 0 10px 30px -10px rgba(0,0,0,0.6);
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Source Serif 4", Georgia, "Times New Roman", serif;
+    font-size: 17px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection { background: var(--accent-bg); color: var(--accent-strong); }
+
+  a { color: var(--accent-fg); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+  a:focus-visible, button:focus-visible, summary:focus-visible {
+    outline: 2px solid var(--accent-fg); outline-offset: 2px; border-radius: 2px;
+  }
+
+  .wrap { max-width: 840px; margin: 0 auto; padding: 0 24px 96px; }
+
+  /* ---------- cover ---------- */
+  .cover {
+    padding: 72px 0 40px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 48px;
+  }
+  .eyebrow {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 12.5px;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--accent-fg);
+    display: flex; align-items: center; gap: 10px;
+    margin: 0 0 18px;
+  }
+  .eyebrow::before {
+    content: ""; width: 26px; height: 1px; background: var(--accent-fg); display: inline-block;
+  }
+  h1.title {
+    font-family: "Archivo Expanded", "Arial Narrow", sans-serif;
+    font-weight: 700;
+    font-size: clamp(2rem, 5vw, 2.9rem);
+    line-height: 1.08;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+    margin: 0 0 16px;
+    color: var(--text);
+  }
+  .subtitle {
+    font-size: 1.15rem;
+    color: var(--text-dim);
+    max-width: 60ch;
+    margin: 0 0 28px;
+    text-wrap: balance;
+  }
+  .cover-meta {
+    display: flex; flex-wrap: wrap; gap: 28px;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 12.5px;
+    color: var(--text-faint);
+    padding-top: 22px;
+    border-top: 1px solid var(--border);
+  }
+  .cover-meta strong { color: var(--text-dim); font-weight: 500; display: block; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 4px; }
+  .cover-meta span { color: var(--text); font-size: 13px; }
+
+  /* ---------- section rhythm ---------- */
+  section { margin-bottom: 56px; }
+  .kicker {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--text-faint);
+    display: flex; align-items: baseline; gap: 10px;
+    margin: 0 0 10px;
+  }
+  .kicker .num { color: var(--accent-fg); font-weight: 600; }
+  h2 {
+    font-family: "Archivo Expanded", "Arial Narrow", sans-serif;
+    font-weight: 700;
+    font-size: 1.55rem;
+    letter-spacing: -0.005em;
+    margin: 0 0 14px;
+    text-wrap: balance;
+    color: var(--text);
+  }
+  h3 {
+    font-family: "Archivo Expanded", "Arial Narrow", sans-serif;
+    font-weight: 600;
+    font-size: 1.08rem;
+    margin: 28px 0 10px;
+    color: var(--text);
+  }
+  p { margin: 0 0 14px; max-width: 68ch; }
+  p.lede { font-size: 1.08rem; color: var(--text-dim); max-width: 66ch; }
+  ul, ol { margin: 0 0 14px; padding-left: 22px; max-width: 66ch; }
+  li { margin-bottom: 6px; }
+  strong { color: var(--text); font-weight: 600; }
+  code, .mono {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.86em;
+    background: var(--code-bg-tok);
+    color: var(--code-fg);
+    padding: 0.12em 0.4em;
+    border-radius: 4px;
+  }
+
+  /* ---------- callout ---------- */
+  .callout {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent-fg);
+    border-radius: 6px;
+    padding: 22px 24px;
+    box-shadow: var(--shadow);
+  }
+  .callout.teal { border-left-color: var(--teal-fg); }
+  .callout .label {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 11.5px; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--accent-fg); margin-bottom: 10px; font-weight: 600;
+  }
+  .callout.teal .label { color: var(--teal-fg); }
+  .callout p:last-child { margin-bottom: 0; }
+
+  /* ---------- pipeline strip ---------- */
+  .pipeline {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 2px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .pipe-step {
+    background: var(--surface);
+    padding: 16px 12px;
+    text-align: center;
+  }
+  .pipe-step .n {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 11px; color: var(--accent-fg); font-weight: 600; letter-spacing: 0.05em;
+  }
+  .pipe-step .label {
+    font-family: "Archivo Expanded", sans-serif;
+    font-weight: 600; font-size: 0.78rem; margin-top: 6px; line-height: 1.25; color: var(--text);
+  }
+  .pipe-step .tag {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 9.5px; margin-top: 6px; color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  @media (max-width: 640px) {
+    .pipeline { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  /* ---------- stage card ---------- */
+  .stage {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+    box-shadow: var(--shadow);
+    padding: 26px 28px;
+    margin-bottom: 22px;
+  }
+  .stage-head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 4px; flex-wrap: wrap; }
+  .stage-head .idx {
+    font-family: "IBM Plex Mono", monospace; font-size: 13px; color: var(--accent-fg); font-weight: 600;
+  }
+  .stage-head h3 { margin: 0; }
+  .pill {
+    font-family: "IBM Plex Mono", monospace; font-size: 10.5px; letter-spacing: 0.05em; text-transform: uppercase;
+    padding: 3px 9px; border-radius: 99px; font-weight: 600;
+  }
+  .pill.pass { background: var(--teal-bg); color: var(--teal-fg); }
+  .pill.flag { background: var(--accent-bg); color: var(--accent-fg); }
+
+  /* ---------- tables ---------- */
+  .table-wrap { overflow-x: auto; margin: 14px 0 4px; border: 1px solid var(--border); border-radius: 6px; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.92rem; min-width: 420px; }
+  th, td {
+    text-align: left; padding: 9px 14px; border-bottom: 1px solid var(--border);
+    font-variant-numeric: tabular-nums;
+  }
+  th {
+    font-family: "IBM Plex Mono", monospace; font-size: 10.5px; letter-spacing: 0.05em; text-transform: uppercase;
+    color: var(--text-faint); background: var(--surface-2); font-weight: 600;
+  }
+  td.num, th.num { text-align: right; font-family: "IBM Plex Mono", monospace; font-size: 0.88rem; }
+  tr:last-child td { border-bottom: none; }
+  tr.win td.num.best { color: var(--teal-fg); font-weight: 600; }
+  .table-note { font-size: 0.86rem; color: var(--text-faint); margin-top: 8px; }
+
+  /* ---------- limitations digest ---------- */
+  .limits-grid { display: grid; grid-template-columns: 1fr; gap: 14px; }
+  .limit-item {
+    border: 1px solid var(--border); border-radius: 6px; padding: 16px 18px; background: var(--surface);
+  }
+  .limit-item .lt { font-family: "Archivo Expanded", sans-serif; font-weight: 600; font-size: 0.95rem; margin-bottom: 6px; color: var(--text); }
+  .limit-item p { margin: 0; font-size: 0.94rem; color: var(--text-dim); }
+
+  footer {
+    border-top: 1px solid var(--border);
+    padding-top: 24px; margin-top: 64px;
+    font-family: "IBM Plex Mono", monospace; font-size: 11.5px; color: var(--text-faint);
+    display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .fade-in { animation: fadeIn 0.5s ease-out both; }
+  }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+</style>
+
+<div class="wrap">
+
+  <div class="cover fade-in">
+    <p class="eyebrow">MS Thesis &middot; Defense Brief</p>
+    <h1 class="title">Reinforcement-Learning Correlation for Multi-Stage Attacks</h1>
+    <p class="subtitle">A post-hoc, two-stage pipeline — a supervised identifier feeding a DQN correlator — evaluated honestly against an external, never-touched benchmark. The headline result is not a clean win, and that is the finding worth defending.</p>
+    <div class="cover-meta">
+      <div><strong>Scope</strong><span>Forensic correlation, not real-time detection</span></div>
+      <div><strong>RL role</strong><span>Link / don't-link decision only</span></div>
+      <div><strong>External test</strong><span>DARPA2000 (LLDOS 1.0 &amp; 2.0.2)</span></div>
+      <div><strong>Status</strong><span>Stages 1&ndash;6 complete</span></div>
+    </div>
+  </div>
+
+  <section>
+    <p class="kicker"><span class="num">&sect;</span> Headline finding</p>
+    <div class="callout">
+      <div class="label">Reported plainly, not reframed</div>
+      <p><strong>On DARPA2000 — genuinely external data no training or tuning code ever read — the trained DQN does not outperform a naive rule-based baseline on pairwise link F1</strong> (DQN <code>0.251</code> vs baseline <code>0.375</code>), though it now leads on Adjusted Rand Index (<code>0.081</code> vs <code>0.037</code>) — the two headline metrics disagree, and both readings are reported rather than one picked to tell a cleaner story. The same DQN reached a mean validation F1 of <code>0.87–0.89</code> on CICIDS2017's held-out campaigns. That gap is a real, investigated cross-dataset generalization gap — exactly the failure mode a same-distribution validation split cannot reveal, and exactly why the external test set was insisted on in the first place.</p>
+    </div>
+    <div class="callout teal" style="margin-top:14px;">
+      <div class="label">Self-caught, not glossed over</div>
+      <p>A full-codebase correctness review (conducted after the headline numbers below had already been reported once) found three real bugs — the significant one: one of the DQN's 7 state features was silently constant for every DARPA2000 pair due to a vocabulary mismatch between the two datasets' label sets. All three were disclosed and fixed, Stage 4 was retrained from scratch, and Stage 5 was re-run — the numbers on this page are the corrected results, with the pre-fix numbers kept on disk rather than discarded. A follow-up pass then empirically tested the fix and the codebase's trickiest mechanism (the DQN's target-network sync) by running it directly rather than only re-reading it, and confirmed event IDs are genuinely unique across both datasets — verification depth documented in <code>docs/stage6_limitations.md</code>.</p>
+    </div>
+  </section>
+
+  <section>
+    <p class="kicker"><span class="num">&sect;</span> Pipeline</p>
+    <h2>Six stages, one direction of data flow</h2>
+    <p>Each stage reads only the previous stage's output. DARPA2000 enters exclusively at Stage 5; no earlier stage's training or tuning process is permitted to see it, and this is checked in code, not just asserted.</p>
+    <div class="pipeline">
+      <div class="pipe-step"><div class="n">01</div><div class="label">Data acquisition</div><div class="tag">DARPA · CICIDS</div></div>
+      <div class="pipe-step"><div class="n">02</div><div class="label">Unified schema &amp; leak-free split</div><div class="tag">Campaign IDs</div></div>
+      <div class="pipe-step"><div class="n">03</div><div class="label">Supervised identifier</div><div class="tag">Random Forest</div></div>
+      <div class="pipe-step"><div class="n">04</div><div class="label">DQN correlator</div><div class="tag">Link / no-link</div></div>
+      <div class="pipe-step"><div class="n">05</div><div class="label">External evaluation</div><div class="tag">DARPA2000</div></div>
+      <div class="pipe-step"><div class="n">06</div><div class="label">Threats to validity</div><div class="tag">Limitations</div></div>
+    </div>
+  </section>
+
+  <section>
+    <p class="kicker"><span class="num">&sect;</span> Stage-by-stage</p>
+    <h2>What was implemented, evaluated, and found</h2>
+
+    <div class="stage">
+      <div class="stage-head"><span class="idx">01 / 02</span><h3>Data &amp; unified schema</h3><span class="pill pass">Implemented</span></div>
+      <p>DARPA2000 (LLDOS 1.0 &amp; 2.0.2, 316 events) parsed directly from Lincoln Laboratory's phase-labeled tcpdump records — genuine, dataset-native multi-stage ground truth. CICIDS2017 (58,057 unified events, 6 derived campaigns) required a time-gap clustering heuristic to construct campaign labels at all, since the dataset ships none natively — a real, disclosed methodological difference between the two sources.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Source</th><th class="num">Events</th><th>Campaigns</th><th>Ground truth</th></tr></thead>
+          <tbody>
+            <tr><td>DARPA2000</td><td class="num">316</td><td>2 (LLDOS 1.0, LLDOS 2.0.2)</td><td>Native — dataset's own phase design</td></tr>
+            <tr><td>CICIDS2017</td><td class="num">58,057</td><td>6 (4 train / 2 val)</td><td>Derived — 60-min time-gap clustering</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="stage">
+      <div class="stage-head"><span class="idx">03</span><h3>Supervised identifier</h3><span class="pill pass">Implemented &amp; evaluated</span></div>
+      <p>Random Forest over 14 classes (13 CICIDS2017 attack types + benign). <code>src_ip</code>/<code>src_port</code>/<code>dst_ip</code>/<code>dst_port</code> excluded from features after verifying the attacker's fixed IP never once appears in 50,000 sampled benign rows — leaving them in would have let the model hit ~100% by keying on attacker identity, not flow behavior.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Class</th><th class="num">Precision</th><th class="num">Recall</th><th class="num">F1</th><th>Note</th></tr></thead>
+          <tbody>
+            <tr><td>Overall (weighted)</td><td class="num">&mdash;</td><td class="num">&mdash;</td><td class="num">0.86</td><td>85% accuracy</td></tr>
+            <tr><td>Port_Scan</td><td class="num">0.944</td><td class="num">0.999</td><td class="num">0.970</td><td>Investigated: genuine signature, not leakage</td></tr>
+            <tr><td>Benign</td><td class="num">0.490</td><td class="num">0.909</td><td class="num">0.637</td><td>Real weak spot — attacks slip through as benign</td></tr>
+            <tr><td>Web_XSS</td><td class="num">0.310</td><td class="num">0.284</td><td class="num">0.297</td><td>Flow stats can't see HTTP payload</td></tr>
+            <tr><td>Web_SQL_Injection</td><td class="num">1.000</td><td class="num">0.750</td><td class="num">0.857</td><td>n=8 test rows — too small to trust</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="stage">
+      <div class="stage-head"><span class="idx">04</span><h3>DQN correlator</h3><span class="pill pass">Implemented &amp; evaluated</span></div>
+      <p>7-feature state built only from the identifier's <em>predicted</em> labels, never ground truth. First training run (5&times; false-negative penalty) converged to an near-"always link" policy; diagnosed, then re-run once with the penalty reduced to 2.5&times; — a disclosed, one-time adjustment, both runs reported.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Configuration</th><th class="num">Mean val F1</th><th class="num">Mean precision</th><th class="num">Mean recall</th></tr></thead>
+          <tbody>
+            <tr><td>Run 1 &mdash; FN penalty 5&times;</td><td class="num">0.838</td><td class="num">0.730</td><td class="num">0.984</td></tr>
+            <tr><td>Run 2 &mdash; FN penalty 2.5&times;</td><td class="num">0.889</td><td class="num">0.808</td><td class="num">0.989</td></tr>
+            <tr class="win"><td>Run 3 &mdash; FN penalty 2.5&times;, state-vector bug fixed (used downstream)</td><td class="num best">0.873</td><td class="num best">0.793</td><td class="num">0.972</td></tr>
+          </tbody>
+        </table>
+        <p class="table-note">Same-distribution validation on CICIDS2017's held-out campaigns — not the external test. Run 3's numbers are within noise of Run 2's, as expected: the fixed feature only mattered for DARPA's vocabulary, not CICIDS2017's.</p>
+      </div>
+    </div>
+
+    <div class="stage">
+      <div class="stage-head"><span class="idx">05</span><h3>External evaluation</h3><span class="pill flag">Headline result</span></div>
+      <p>Full campaign reconstruction on all 316 DARPA2000 events, DQN vs a naive same-IP + 30-minute rule, identical clustering procedure for both so the comparison isolates the decision function.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Method</th><th class="num">Precision</th><th class="num">Recall</th><th class="num">F1</th><th class="num">ARI</th></tr></thead>
+          <tbody>
+            <tr><td>DQN</td><td class="num">0.317</td><td class="num">0.208</td><td class="num">0.251</td><td class="num best">0.081</td></tr>
+            <tr class="win"><td>Rule-based baseline</td><td class="num">0.251</td><td class="num best">0.746</td><td class="num best">0.375</td><td class="num">0.037</td></tr>
+          </tbody>
+        </table>
+        <p class="table-note">The two metrics disagree: DQN leads on ARI (fewer, more purposeful clusters — one is 89% true-campaign members) but trails on pairwise F1 (baseline over-links, catching more true pairs by brute force at the cost of 26,063 false-positive pairs). Both readings are reported, not reconciled into one number. DQN still under-links relative to ground truth even in a zero-ambiguity case (LLDOS 2.0.2, no distractors at all).</p>
+      </div>
+    </div>
+
+    <div class="stage">
+      <div class="stage-head"><span class="idx">3b</span><h3>UNSW-NB15 cross-check</h3><span class="pill pass">Optional, secondary</span></div>
+      <p>An independent Random Forest — same methodology as Stage 3, not a reuse of its actual model (no shared feature schema) — trained on UNSW-NB15's own canonical split. Headline: 68.0% accuracy, macro F1 0.481 — realistically more modest than CICIDS2017, as expected on a different, harder dataset. A documented UNSW-NB15 leakage concern (<code>sttl</code>/<code>dttl</code>, a simulation-configuration artifact) was tested with an actual before/after ablation rather than assumed — removing it changed accuracy by only <code>+0.001</code>, a result reported precisely because it complicates the tidier "found and fixed a leak" story.</p>
+    </div>
+  </section>
+
+  <section>
+    <p class="kicker"><span class="num">&sect;</span> Threats to validity</p>
+    <h2>What to say when asked "but what about&hellip;"</h2>
+    <div class="limits-grid">
+      <div class="limit-item">
+        <div class="lt">DARPA2000's age</div>
+        <p>Predates web-layer attacks entirely. Used anyway because it remains the only source with genuine, dataset-native multi-stage campaign ground truth — CICIDS2017 required inventing a derivation heuristic for the same purpose (Stage 2 finding), which no newer flow dataset avoids needing.</p>
+      </div>
+      <div class="limit-item">
+        <div class="lt">Single environment, N=2 campaigns</div>
+        <p>The entire external headline rests on two campaigns from one simulated topology. Real, investigated result — not the same claim as generalizing to external intrusion data broadly.</p>
+      </div>
+      <div class="limit-item">
+        <div class="lt">No genuine web/WAF-tier data</div>
+        <p>CICIDS2017's "web" attack files are still flow-level captures, not HTTP-layer alerts. The planned DVWA + ModSecurity source was scoped, then deferred, then never built.</p>
+      </div>
+      <div class="limit-item">
+        <div class="lt">DARPA's identification signal is idealized</div>
+        <p>Stage 3's classifier cannot run on DARPA's schema at all — no equivalent flow-statistics features exist to compute. DARPA's own ground-truth labels stood in for "predicted" labels, an easier condition than CICIDS2017's training ever had.</p>
+      </div>
+      <div class="limit-item">
+        <div class="lt">Post-hoc scope, not real-time</div>
+        <p>Every design assumption is offline/batch — bounded episode windows, hour-long correlation windows. No throughput or latency claim was ever made or tested.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <span>docs/stage6_limitations.md &middot; full findings per stage in docs/</span>
+    <span>data/processed/stage{3,4,5}/ &middot; models, curves, raw results</span>
+  </footer>
+
+</div>
