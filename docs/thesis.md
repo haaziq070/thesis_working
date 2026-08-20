@@ -161,56 +161,199 @@ episode. Chapter 7 is a systematic threats-to-validity accounting. Chapter
 
 # Chapter 2 — Background and Related Work
 
-## 2.1 Multi-Stage Attacks and Alert Correlation
+*Note to the author: this chapter's narrower, less universally-known
+citations (Section 2.2, 2.6 in particular) should be independently verified
+against the original sources — exact venues, years, and page numbers were
+not re-checked line-by-line while assembling this document. Where a claim
+rests on a specific paper's findings rather than general, well-established
+knowledge, the citation is marked and should be confirmed before
+submission.*
 
-Multi-stage attacks are commonly described using a kill-chain-style
-decomposition (reconnaissance, initial exploitation, installation,
-command-and-control / lateral movement, and impact/exfiltration). Alert
-correlation is the task of grouping raw sensor output — which is generated
-per-event, not per-campaign — back into these campaign-level structures.
-Prior approaches broadly fall into: (a) rule-based correlation (fixed time
-windows, shared-host or shared-session heuristics), which is simple and
-interpretable but brittle against attacker-controlled timing and topology
-variation; and (b) statistical or machine-learning correlation, which can
-adapt to data but is vulnerable to the same leakage failure modes discussed
-in Section 1.4 if not evaluated carefully.
+## 2.1 Alert Fatigue and the Case for Automated Correlation
 
-## 2.2 Reinforcement Learning for Sequential Decisions
+The practical motivation for alert correlation research is a volume
+problem, not a novelty problem. A single network of moderate size can
+generate thousands of low-level intrusion detection and firewall alerts
+per day, the large majority of which are either benign noise, duplicates
+of the same underlying event, or fragments of a single incident reported
+once per sensor per packet. Security operations center (SOC) analysts
+facing this volume are well documented to experience "alert fatigue" —
+a state in which real, actionable alerts are missed or delayed because
+they are indistinguishable, at the point of triage, from the surrounding
+noise. Correlating raw alerts into campaign-level groupings before they
+reach an analyst is one of the standard mitigations proposed for this
+problem: it reduces the *number* of things a human must reason about,
+ideally without discarding the *information* contained in the raw alerts.
+This project's Stage 2 burst-aggregation step (collapsing tens of
+thousands of near-duplicate flood packets into one-second aggregate
+events, Chapter 4.2) is a small, concrete instance of this same problem
+at the sensor level, before campaign-level correlation is even attempted.
 
-Reinforcement learning fits problems that are naturally sequential and
-where a decision affects the state available for the next decision. In
-this project's correlation setting, deciding to link (or not link) a
-candidate event to the current campaign genuinely changes the problem the
-agent faces next: a correctly accepted link moves the campaign's "anchor"
-forward in time and topology, changing which subsequent events are
-plausible candidates. This is a real, not cosmetic, multi-step episode
-structure, which is what justifies using RL (with a genuine discount
-factor over multi-step returns) rather than treating each candidate pair as
-an independent, one-shot classification problem.
+## 2.2 Approaches to Alert Correlation
 
-## 2.3 DQN vs. PPO
+Prior alert-correlation approaches can be organized into four broad,
+overlapping families.
 
-Two natural RL algorithm families were considered: Deep Q-Networks (DQN;
-Mnih et al., 2015) and Proximal Policy Optimization (PPO; Schulman et al.,
-2017). PPO's principal strengths are in continuous or very large action
-spaces and in stabilizing policy-gradient updates for high-dimensional
-control problems. The correlation decision in this project is a **binary,
-discrete** action — link or don't-link — which is exactly the setting DQN
-was designed for, and does not require any of the mechanisms PPO adds
-value for. DQN was selected as the better-fitting, simpler algorithm for
-this action space, not as a default choice.
+**Rule-based and similarity-based correlation.** The simplest and most
+widely deployed approach in production SOC tooling: alerts are grouped by
+fixed heuristics such as a shared source or destination IP within a fixed
+time window, or a similarity score over shared alert attributes. This
+approach is interpretable and cheap to compute — this project's Stage 5
+baseline is exactly this family — but it is brittle against attacker-
+controlled timing (an attacker who spaces out a campaign's stages beyond
+the fixed window defeats it entirely) and against topology variation
+(pivoting through an intermediate host breaks a pure shared-IP rule).
 
-The DQN implementation in this project includes the algorithm's standard
-components: an experience replay buffer (decorrelating sequential training
-samples), a target network synchronized periodically with the policy
-network (stabilizing the bootstrapped Q-value targets), epsilon-greedy
-exploration with decay, and a discount factor applied over genuine
-multi-step episodes (Section 2.2). Implementation details, including a
-disclosed substitution of `scikit-learn`'s `MLPRegressor` for a standard
-deep-learning framework due to environment constraints, are described in
-Chapter 4 and revisited as a limitation in Chapter 7.
+**Statistical and probabilistic correlation.** Early academic work (e.g.,
+Valdes and Skinner's probabilistic alert-correlation approach, and related
+statistical similarity-scoring methods from the early 2000s intrusion-
+detection literature) models correlation as a similarity or likelihood
+score over alert attribute distributions rather than a hard rule,
+producing soft correlation strengths instead of a binary link/don't-link
+decision. This generalizes rule-based correlation but still typically
+relies on hand-specified similarity functions and attribute weights.
 
-## 2.4 Datasets
+**Causal and graph-based correlation.** A second line of work (e.g., Ning,
+Cui, and Reeves' work on constructing attack scenarios by matching an
+alert's declared "prerequisites" against a preceding alert's
+"consequences") builds correlation on top of an explicit causal or
+prerequisite model of how one attack stage enables the next — closer in
+spirit to reconstructing a kill chain than to a similarity metric.
+Reconstructing the DARPA2000 kill-chain progression in this project's
+Stage 5 evaluation (Chapter 5.4) is conceptually adjacent to this family,
+though this project's DQN and rule-based baseline both operate on
+similarity/temporal features rather than an explicit prerequisite graph.
+
+**Machine-learning-based correlation.** More recent work applies
+supervised or unsupervised learning directly to the correlation problem —
+clustering alerts (e.g., root-cause-analysis-oriented alarm clustering
+approaches such as Julisch's work on clustering intrusion-detection
+alarms) or, more recently, applying deep learning to alert-sequence data.
+This family is the most flexible but also the most exposed to the data-
+leakage failure mode discussed in Section 1.4: an ML-based correlator
+evaluated only on same-distribution held-out data can appear to solve
+correlation while actually having learned a dataset-specific shortcut
+(e.g., a fixed attacker IP, a simulation artifact) that a rule-based
+system never had the flexibility to exploit in the first place. This risk
+is precisely why this thesis insists on an external, structurally
+different evaluation dataset (Chapter 4.6) rather than treating strong
+same-distribution validation numbers as sufficient evidence on their own.
+
+This project's DQN-based correlator sits within the machine-learning
+family but is deliberately restricted to a small, interpretable, seven-
+dimensional feature vector (Section 3.5) rather than raw alert content, in
+an attempt to reduce — though, as Chapter 6 shows, not eliminate — this
+family's characteristic risk of learning dataset-specific shortcuts rather
+than genuine correlation signal.
+
+## 2.3 Kill-Chain and Attack-Stage Models
+
+This project's notion of a "multi-stage" campaign is grounded in the
+family of kill-chain and attack-lifecycle models used throughout the
+intrusion-detection and threat-intelligence literature — most influentially
+the Lockheed Martin Cyber Kill Chain (Hutchins, Cloppert, and Amin, 2011),
+which decomposes an intrusion into a fixed sequence of stages
+(reconnaissance, weaponization, delivery, exploitation, installation,
+command-and-control, and actions on objectives), and the more granular,
+technique-level MITRE ATT&CK framework, which catalogs specific adversary
+techniques organized under broadly analogous tactic categories. This
+project's `kill_chain_stage` schema field (Chapter 3.2) is a coarsened
+version of this family of models, chosen to be granular enough to give the
+correlation agent a genuine stage-progression signal (Section 3.5) while
+remaining mappable onto both DARPA2000's own documented phase structure
+and CICIDS2017's flat per-technique labels — the two source datasets do
+not share a stage taxonomy natively, and reconciling them onto one shared
+scale was itself one of Stage 2's concrete tasks (Chapter 4.2).
+
+## 2.4 Reinforcement Learning Foundations
+
+Reinforcement learning formalizes sequential decision-making as a Markov
+Decision Process (MDP): an agent observes a state, takes an action,
+receives a reward, and transitions to a next state, with the goal of
+learning a policy that maximizes expected cumulative (discounted) reward.
+Q-learning (Watkins and Dayan, 1992) is the foundational value-based
+algorithm in this family: it learns an action-value function, Q(s, a),
+estimating the expected return of taking action *a* in state *s* and
+acting optimally thereafter, without requiring a model of the environment's
+transition dynamics. Deep Q-Networks (DQN; Mnih et al., 2015) extend
+tabular Q-learning to large or continuous state spaces by approximating
+Q(s, a) with a neural network, and introduced two mechanisms specifically
+to stabilize this combination: an experience replay buffer, which
+decorrelates the sequential training samples a naive online update would
+otherwise produce, and a separate, periodically-synchronized target
+network, which prevents the bootstrapped Q-value target from chasing a
+rapidly-shifting estimate of itself. Subsequent work identified and
+addressed specific weaknesses in vanilla DQN — most notably Double DQN
+(Van Hasselt, Guez, and Silver, 2016), which addresses DQN's tendency to
+systematically overestimate Q-values by decoupling action selection from
+action evaluation, and prioritized experience replay, which samples
+high-error transitions more often than uniform replay does. This project's
+implementation (Chapter 4.4) uses standard uniform replay and single-
+network action selection rather than these refinements; this is a
+deliberate scope limitation, not an oversight, and is revisited in
+Chapter 7.4.
+
+Policy-gradient methods take a different approach, directly parameterizing
+and optimizing a stochastic policy rather than a value function. Trust
+Region Policy Optimization (TRPO; Schulman et al., 2015) constrains each
+policy update to a trust region around the current policy to guarantee
+stable improvement, at significant computational cost per update; Proximal
+Policy Optimization (PPO; Schulman et al., 2017) approximates the same
+stabilizing effect far more cheaply via a clipped surrogate objective, and
+has become one of the most widely used general-purpose deep-RL algorithms,
+particularly for continuous-control and large-action-space problems.
+
+## 2.5 DQN vs. PPO for This Problem
+
+Section 2.4's algorithm families differ principally in the action spaces
+and update stability tradeoffs they were designed around. PPO's clipped-
+surrogate mechanism earns its complexity in continuous or very large
+discrete action spaces, where naive value-based methods struggle to
+represent or search over the action set efficiently. The correlation
+decision in this project is a **binary, discrete** action — link or
+don't-link — which is precisely the small, discrete action space DQN was
+designed for, and does not require any of the machinery PPO adds value
+for. DQN was selected as the better-fitting, simpler algorithm for this
+specific action space, not as a default or a convenience choice; a
+policy-gradient method remains a reasonable alternative worth testing in
+future work (Chapter 8.2), but nothing about this problem's action space
+argues for one over DQN.
+
+The DQN implementation in this project includes the algorithm's core
+stabilizing components described in Section 2.4: an experience replay
+buffer, a target network synchronized periodically with the policy
+network, epsilon-greedy exploration with decay, and a discount factor
+applied over genuine multi-step episodes (Section 2.2 above; formalized as
+an MDP in Section 3.5). It does not include Double DQN's decoupled action
+selection or prioritized replay (Section 2.4), a disclosed scope
+limitation. It also substitutes `scikit-learn`'s `MLPRegressor` for a
+standard deep-learning framework, a disclosed environment-driven
+engineering decision described in Chapter 4.4 and revisited as a
+limitation in Chapter 7.4.
+
+## 2.6 Reinforcement Learning Applied to Cybersecurity
+
+Beyond alert correlation specifically, reinforcement learning has been
+applied across several cybersecurity subareas: adaptive intrusion-
+response and mitigation-selection systems that learn which defensive
+action to take given an observed attack state; autonomous penetration-
+testing and red-teaming agents that learn attack-path selection within a
+network model; and RL-based intrusion *detection* (as opposed to
+correlation), where an agent learns to classify or flag traffic directly.
+This broader literature motivates RL as a viable tool in the security
+domain generally, but the great majority of it targets a different problem
+than this thesis: either the *detection*/*response* decision (this
+project deliberately excludes RL from detection and response, restricting
+it to the narrower correlation decision, Section 1.3) or an *offensive*
+planning problem (attack-path selection), rather than the *defensive,
+post-hoc correlation* problem this thesis addresses. This project's
+specific combination — RL restricted to a binary correlation decision,
+evaluated with a genuinely external, structurally different test set — is
+comparatively underrepresented in this literature relative to RL-based
+detection work, which more commonly reports same-distribution validation
+results only, a gap this thesis's Chapter 6 finding speaks directly to.
+
+## 2.7 Datasets
 
 **DARPA2000** (MIT Lincoln Laboratory) is used as this project's external,
 held-out evaluation set. It comprises two labeled multi-stage intrusion
@@ -218,21 +361,80 @@ scenarios, LLDOS 1.0 and LLDOS 2.0.2, and remains, as of this writing, one
 of the few datasets with genuine, dataset-native multi-phase campaign
 ground truth designed specifically to exercise correlation research — a
 property this project's own Stage 2 work confirmed newer flow-centric
-datasets do not have natively (Chapter 4). **CICIDS2017** (Sharafaldin,
-Lashkari, and Ghorbani, 2018) is used as the primary training and
-same-distribution validation dataset for both the Stage 3 identifier and
-the Stage 4 correlator; it is a large, modern, labeled network-traffic
-dataset but, notably, ships no native multi-stage campaign labels
-(Chapter 4). **UNSW-NB15** (Moustafa and Slay, 2015) is used as an
-optional, secondary cross-check dataset for the identification methodology
-only (Chapter 4, Stage 3b).
+datasets do not have natively (Chapter 4). Its age and known limitations
+(Chapter 7.3) are a standard, acknowledged tradeoff in the correlation
+literature, not unique to this project: newer datasets with realistic
+traffic volumes have generally not been constructed with genuine
+multi-phase campaign ground truth as a design goal, which is itself an
+observation this project's Stage 2 work makes concrete (Section 2.7,
+CICIDS2017 below).
+
+**CICIDS2017** (Sharafaldin, Lashkari, and Ghorbani, 2018) is used as the
+primary training and same-distribution validation dataset for both the
+Stage 3 identifier and the Stage 4 correlator. It is a large, modern,
+labeled network-traffic dataset built specifically to address well-known
+shortcomings of older intrusion-detection datasets (limited traffic
+diversity, unrealistic background traffic, missing modern attack types),
+and has become one of the most widely used benchmarks in recent network-
+intrusion-detection ML research. It ships no native multi-stage campaign
+labels, however — every attack type is captured as a separate, single-
+technique file — which is precisely why Stage 2 had to derive campaign
+structure rather than read it directly (Chapter 4.2), and is the dataset
+property most directly responsible for this project's insistence on a
+second, genuinely campaign-labeled dataset (DARPA2000) for the headline
+evaluation.
+
+**UNSW-NB15** (Moustafa and Slay, 2015) is used as an optional, secondary
+cross-check dataset for the identification methodology only (Chapter 4,
+Stage 3b). It was constructed specifically to be a harder, more modern
+alternative to older benchmarks, with a hybrid of real modern and
+synthetically generated attack traffic across nine attack categories, and
+is widely acknowledged in the classification literature as a harder,
+noisier classification problem than CICIDS2017 — consistent with, and
+part of the motivation for treating as unsurprising, this project's own
+Stage 3b finding of substantially lower classification performance on it
+(Chapter 5.2).
+
+## 2.8 Positioning This Thesis Relative to Prior Work
+
+Relative to the correlation literature summarized in Section 2.2, this
+thesis's contribution is not a new correlation algorithm family in the
+abstract, but a specific, disciplined combination of an existing one (DQN,
+Section 2.4–2.5) with an evaluation methodology — campaign-level leakage-
+free splitting enforced in code, and headline evaluation on a genuinely
+external, structurally different dataset — that is comparatively rare in
+the ML-based alert-correlation and RL-for-cybersecurity literature
+(Section 2.6), where same-distribution validation is more commonly
+reported as the primary or only result. Section 6.1's central finding — a
+strong same-distribution result that does not transfer externally — is
+offered as direct empirical evidence for why that evaluation methodology
+matters, not only as a caveat about this particular model.
 
 # Chapter 3 — System Design
 
-## 3.1 Two-Model Architecture
+## 3.1 Design Requirements Derived from Chapter 2
+
+Four requirements, each traceable to a specific point in Chapter 2's
+review, drove the system-design decisions in this chapter. First, Section
+2.2's observation that ML-based correlation is the family most exposed to
+data leakage argues for leakage prevention being a first-class, code-
+enforced property of the pipeline rather than an evaluation afterthought
+(Section 3.4). Second, Section 2.3's kill-chain framing argues for an
+explicit, shared stage taxonomy that both source datasets can be mapped
+onto, so that stage-progression information is available to the
+correlator regardless of which dataset an event came from (Section 3.2).
+Third, Section 2.4-2.5's action-space argument for DQN over policy-gradient
+methods argues for a correlation decision framed as a genuine, discrete,
+multi-step MDP rather than a one-shot pairwise classification problem
+(Section 3.5). Fourth, Section 2.8's positioning of this thesis around
+external evaluation argues for a system architecture that can run
+unmodified against a structurally different second dataset, which in turn
+requires the shared schema described next.
+
+## 3.2 Two-Model Architecture
 
 The pipeline deliberately separates two learning problems that are often
-conflated in prior alert-correlation work:
+conflated in prior alert-correlation work (Section 2.2):
 
 - **Identification** (Stage 3): given a single alert's features, predict
   which attack technique it most likely represents, out of a fixed
@@ -247,49 +449,116 @@ conflated in prior alert-correlation work:
   signal reflects a realistic downstream operating condition rather than an
   idealized one.
 
-## 3.2 Unified Event Schema
+Keeping these as two separately trained, separately evaluated models,
+rather than one end-to-end system, has a direct evaluation benefit
+beyond the scope commitment in Section 1.3: it lets Chapter 6 attribute
+weaknesses to a specific stage where possible (e.g., noting that Stage
+4's CICIDS2017 training absorbs Stage 3's actual identification errors,
+Chapter 7.4) rather than reporting one opaque combined error rate that
+conflates two different kinds of mistakes.
+
+## 3.3 Unified Event Schema
 
 Both DARPA2000 and CICIDS2017 are converted into a single shared event
 schema (`src/schema.py`): timestamp, source/destination IP and port,
 service, sensor tier (network / web / host), campaign identifier,
 kill-chain stage, attack type, and a same-campaign link indicator. This
 shared schema is what allows one correlation environment and one DQN agent
-implementation to operate over both datasets, and is a prerequisite for the
-leakage-free split machinery described next.
+implementation to operate over both datasets unmodified, and is a
+prerequisite for the leakage-free split machinery described next. It plays
+the same normalizing role in this project that common event schemas
+(e.g., the vendor-neutral Common Event Format, or a SIEM vendor's common
+information model) play in production SOC tooling — allowing downstream
+logic to be written once against a stable field set rather than once per
+sensor vendor or dataset — narrowed here to exactly the fields the
+correlation task needs (Section 2.3's kill-chain stage among them) rather
+than the much larger field sets those production schemas typically carry.
+
+The `kill_chain_stage` field is populated differently for each source, a
+distinction stated explicitly rather than glossed over: DARPA2000's value
+is derived from the dataset's own documented phase structure (genuine
+ground truth, Section 2.7), while CICIDS2017's value is either a
+Stage-3-predicted label (train/validation time, Section 3.2) or, in the
+one place ground truth is used for CICIDS2017, a direct mapping from its
+native single-technique label. This asymmetry — one dataset supplying
+ground-truth stage information, the other supplying a mix of predicted and
+mapped-from-native-label values — is a real methodological wrinkle,
+revisited directly in Chapter 6.1's discussion of Stage 5's idealized
+DARPA2000 identification input.
 
 The original proposal envisioned a genuine three-tier telemetry design
 (network/firewall, web/WAF, host/endpoint). In the delivered system, only
 the network tier is actually populated with real sensor data end to end;
-this gap, and why it exists, is discussed explicitly in Chapter 7.
+this gap, and why it exists, is discussed explicitly in Chapter 7.2.
 
-## 3.3 Leakage-Free, Campaign-Level Splitting
+## 3.4 Leakage-Free, Campaign-Level Splitting
 
-`src/leakage.py` provides two functions that are the concrete, checked-in-
-code backing for every "no leakage" claim made about this project's
-results: `assert_no_campaign_leakage`, which verifies that no campaign
-identifier appears on both sides of a train/test split, and
-`assert_dataset_is_test_only`, which verifies that a designated
-test-only data source (DARPA2000) never appears in a training dataframe.
-These assertions run inline in the actual training and evaluation scripts
-— they are not documentation of an intended property, but a property the
-code will refuse to proceed past if violated.
+Section 2.2 identified data leakage as the ML-correlation literature's
+characteristic risk, and Section 1.4 makes avoiding it this thesis's
+governing principle; this section is where that principle is translated
+into a specific, code-enforced mechanism rather than an evaluation-time
+promise. `src/leakage.py` provides two functions that are the concrete
+backing for every "no leakage" claim made about this project's results:
+`assert_no_campaign_leakage`, which verifies that no campaign identifier
+appears on both sides of a train/test split, and
+`assert_dataset_is_test_only`, which verifies that a designated test-only
+data source (DARPA2000) never appears in a training dataframe. These
+assertions run inline in the actual training and evaluation scripts — they
+are not documentation of an intended property, but a property the code
+will refuse to proceed past if violated. Splitting is deliberately done at
+the *campaign* level, not the individual-event level: a naive event-level
+random split would place some of a campaign's events in training and
+others in test, letting the model implicitly learn campaign-specific
+identifiers (a shared timestamp cluster, a specific host pair) rather than
+generalizable correlation signal — precisely the shortcut-learning failure
+mode Section 2.2 warns is endemic to this literature, and the same failure
+mode that Stage 3's fixed-attacker-IP feature (Chapter 4.3) was found to
+be exploiting before it was removed.
 
-## 3.4 Correlation Environment and Reward Design
+## 3.5 Correlation Environment: MDP Formulation and Reward Design
 
-`src/correlation_env.py` implements the RL environment: episodes are built
-from a campaign's true events plus sampled same-time-window distractor
-events (Section 4.2); the agent, at each step, compares a candidate event
-against the campaign's current anchor via a seven-feature vector (temporal
-proximity, host/service overlap, and kill-chain stage progression among
-them) and chooses to link or not link. Rewards were designed to reflect
-realistic operating costs: a correct link and a correct rejection are both
-rewarded, an incorrect link (false positive) is penalized, and a missed
-link (false negative) is penalized more heavily than a false positive,
-reflecting the higher real-world cost of a security analyst missing part
-of a campaign versus investigating one spurious link. The specific
-false-negative weighting was tuned once during Stage 4 (Chapter 4) after
-observing a degenerate policy at an initial setting, and this single,
-disclosed adjustment is revisited as a limitation in Chapter 7.
+`src/correlation_env.py` implements the RL environment underlying the
+DQN agent described in Section 2.4–2.5, formalized as the following MDP:
+
+- **State.** A seven-dimensional feature vector comparing a candidate
+  event against the current campaign anchor: temporal proximity (time
+  elapsed since the anchor), shared-host and shared-service indicators,
+  and a small set of features encoding the anchor's and candidate's
+  relative kill-chain stage progression (Section 2.3, Section 3.3).
+- **Action.** Binary: link the candidate event to the current campaign, or
+  reject it (Section 2.5).
+- **Transition.** Accepting a link updates the episode's anchor to the
+  newly linked event, changing the state features available for the next
+  decision — the genuine, non-cosmetic multi-step structure argued for in
+  Section 2.2 and Section 3.1. Rejecting a candidate leaves the anchor
+  unchanged and advances to the next candidate in the episode's event
+  pool.
+- **Episode.** Built from a single campaign's true events plus sampled
+  same-time-window distractor events (Chapter 4.2), capped at 60 events
+  per episode (Chapter 7.7).
+- **Reward.** A correct link and a correct rejection are both rewarded; an
+  incorrect link (false positive) is penalized; a missed link (false
+  negative) is penalized more heavily than a false positive, reflecting
+  the higher real-world cost of a security analyst missing part of a
+  campaign versus investigating one spurious link. The specific false-
+  negative weighting was tuned once during Stage 4 (Chapter 4.4) after
+  observing a degenerate policy at an initial setting, and this single,
+  disclosed adjustment is revisited as a limitation in Chapter 7.4.
+- **Discount factor.** Applied over the genuine multi-step episode
+  structure above, consistent with the standard MDP formulation in
+  Section 2.4 rather than treated as a free hyperparameter divorced from
+  the problem's actual sequential structure.
+
+Restricting the state to this compact, seven-dimensional, structurally
+interpretable feature vector — rather than, say, raw alert text or the
+full unified-schema record — is itself a design choice made in direct
+response to Section 2.2's shortcut-learning risk: a smaller, hand-chosen
+feature set is easier to audit for leakage than a large, opaque one, at
+the cost of expressiveness the agent might otherwise have used
+productively. Whether this tradeoff was well-judged is left open, and
+Chapter 6.1's discussion of the DQN's generalization gap should be read
+with this restricted state representation as one candidate contributing
+factor.
 
 # Chapter 4 — Methodology
 
@@ -847,6 +1116,39 @@ this document.*
   (General discussion of data-leakage and evaluation pitfalls in ML-based
   security research, cited here as background for this thesis's leakage-
   discipline methodology, Section 1.4.)
+- Hutchins, E. M., Cloppert, M. J., & Amin, R. M. (2011). Intelligence-
+  Driven Computer Network Defense Informed by Analysis of Adversary
+  Campaigns and Intrusion Kill Chains. *Proceedings of the 6th
+  International Conference on Information Warfare and Security*. (Lockheed
+  Martin Cyber Kill Chain, Section 2.3.)
+- MITRE. ATT&CK — a globally accessible knowledge base of adversary
+  tactics and techniques. `attack.mitre.org` (Section 2.3).
+- Valdes, A., & Skinner, K. (2001). Probabilistic Alert Correlation.
+  *Recent Advances in Intrusion Detection (RAID)*. (Statistical
+  alert-correlation approach, Section 2.2 — verify exact venue/year.)
+- Ning, P., Cui, Y., & Reeves, D. S. (2002). Constructing Attack Scenarios
+  through Correlation of Intrusion Alerts. *Proceedings of the 9th ACM
+  Conference on Computer and Communications Security (CCS)*. (Causal /
+  prerequisite-consequence alert correlation, Section 2.2 — verify exact
+  venue/year.)
+- Julisch, K. (2003). Clustering Intrusion Detection Alarms to Support
+  Root Cause Analysis. *ACM Transactions on Information and System
+  Security*, 6(4), 443–471. (Alarm-clustering correlation, Section 2.2 —
+  verify exact venue/year/pages.)
+- Watkins, C. J. C. H., & Dayan, P. (1992). Q-learning. *Machine Learning*,
+  8(3–4), 279–292. (Section 2.4.)
+- Sutton, R. S., & Barto, A. G. (2018). *Reinforcement Learning: An
+  Introduction* (2nd ed.). MIT Press. (Standard RL/MDP reference, Section
+  2.4, Section 3.5.)
+- Van Hasselt, H., Guez, A., & Silver, D. (2016). Deep Reinforcement
+  Learning with Double Q-learning. *Proceedings of the AAAI Conference on
+  Artificial Intelligence*. (Double DQN, Section 2.4.)
+- Schaul, T., Quan, J., Antonoglou, I., & Silver, D. (2016). Prioritized
+  Experience Replay. *International Conference on Learning
+  Representations (ICLR)*. (Section 2.4.)
+- Schulman, J., Levine, S., Abbeel, P., Jordan, M., & Moritz, P. (2015).
+  Trust Region Policy Optimization. *International Conference on Machine
+  Learning (ICML)*. (TRPO, precursor to PPO, Section 2.4.)
 
 # Appendix A — Repository and Reproduction
 
