@@ -288,15 +288,33 @@ supervised or unsupervised learning directly to the correlation problem —
 clustering alerts (e.g., root-cause-analysis-oriented alarm clustering
 approaches such as Julisch's work on clustering intrusion-detection
 alarms) or, more recently, applying deep learning to alert-sequence data.
-This family is the most flexible but also the most exposed to the data-
-leakage failure mode discussed in Section 1.4: an ML-based correlator
-evaluated only on same-distribution held-out data can appear to solve
-correlation while actually having learned a dataset-specific shortcut
-(e.g., a fixed attacker IP, a simulation artifact) that a rule-based
-system never had the flexibility to exploit in the first place. This risk
-is precisely why this thesis insists on an external, structurally
-different evaluation dataset (Section 4.6) rather than treating strong
-same-distribution validation numbers as sufficient evidence on their own.
+The closest published work to this thesis's own approach is GRAIN
+(*Computers & Security*, Vol. 148, 2024 — author list not independently
+confirmed during this review and deliberately not stated here rather than
+guessed; verify directly from the publisher record before citing further),
+which builds a
+graph neural network over an alert causal graph and uses reinforcement
+learning to screen the causal graph down to the authentic multi-step
+attack path — RL applied to essentially this thesis's problem (deciding
+which alerts belong to the same attack narrative), but via a materially
+different architecture (a GNN operating over a full alert graph, versus
+this thesis's DQN operating on a single hand-engineered seven-feature
+pairwise state, Section 3.5) and, as far as could be confirmed from
+published summaries alone, an unconfirmed evaluation protocol — whether
+its reported results include a genuinely external, never-touched holdout
+in the sense Section 4.6 insists on, or same-distribution evaluation
+across its stated four benchmark datasets, was not established here and
+should be checked directly against the paper before treating it as a
+directly comparable headline number (Section 2.8). This family is the
+most flexible but also the most exposed to the data-leakage failure mode
+discussed in Section 1.4: an ML-based correlator evaluated only on
+same-distribution held-out data can appear to solve correlation while
+actually having learned a dataset-specific shortcut (e.g., a fixed
+attacker IP, a simulation artifact) that a rule-based system never had
+the flexibility to exploit in the first place. This risk is precisely why
+this thesis insists on an external, structurally different evaluation
+dataset (Section 4.6) rather than treating strong same-distribution
+validation numbers as sufficient evidence on their own.
 
 This project's DQN-based correlator sits within the machine-learning
 family but is deliberately restricted to a small, interpretable, seven-
@@ -409,14 +427,25 @@ opposed to correlation) has also been explored directly — for example,
 Lopez-Martin, Carro, and Sanchez-Esguevillas (2020) apply a DQN to network
 intrusion detection framed as a classification problem — exactly the kind
 of RL-for-*detection* application this thesis's scope commitments
-(Section 1.3) deliberately rule out for its own identification stage. This broader
-literature motivates RL as a viable tool in the security domain generally,
-but the great majority of it targets a different problem than this
-thesis: either the *detection*/*response* decision (this project
-deliberately excludes RL from detection and response, restricting it to
-the narrower correlation decision, Section 1.3) or an *offensive*
-planning problem (attack-path selection), rather than the *defensive,
-post-hoc correlation* problem this thesis addresses. This project's
+(Section 1.3) deliberately rule out for its own identification stage. A
+fourth, closely related subarea applies RL to alert *prioritization*
+rather than correlation or detection: AlertPro (Wang, Yang, Liang, Zhang,
+Zhang, and Gong, 2024) uses RL to rank already-generated alerts by
+priority for analyst review, sharing this thesis's Section 2.1 alert-
+fatigue motivation and its focus on multi-step attacks, but addressing a
+*ranking* decision (which alert should an analyst look at first) rather
+than this thesis's *grouping* decision (which alerts belong to the same
+campaign) — a related but distinct problem, not a competing solution to
+the one this thesis addresses. This broader literature motivates RL as a
+viable tool in the security domain generally, and the great majority of
+it targets a different problem than this thesis — the *detection*/
+*response* decision, an *offensive* planning problem, or, as with
+AlertPro, a *prioritization* decision — rather than the *defensive,
+post-hoc correlation* problem this thesis addresses. The one substantive
+exception found is GRAIN (Section 2.2), which applies RL directly to
+alert correlation for multi-step attacks; this thesis's positioning
+relative to that specific work, including what remains unverified about
+it, is discussed in Section 2.8. Short of that exception, this project's
 specific combination — RL restricted to a binary correlation decision,
 evaluated with a genuinely external, structurally different test set — is
 comparatively underrepresented in this literature relative to RL-based
@@ -479,6 +508,37 @@ reported as the primary or only result. Section 6.1's central finding — a
 strong same-distribution result that does not transfer externally — is
 offered as direct empirical evidence for why that evaluation methodology
 matters, not only as a caveat about this particular model.
+
+GRAIN (Section 2.2) is the closest published work identified during this
+project's literature review, and the honest positioning claim is narrower
+than "no prior work applies RL to alert correlation": that claim is false
+once GRAIN is accounted for. What could and could not be confirmed about
+it during this review matters for how it should be used in a defense.
+Confirmed, from published summaries: it uses a GNN plus RL to reconstruct
+multi-step attack scenarios by screening a causal graph of alerts down to
+an authentic attack path, evaluated across four public multi-step-attack
+datasets, and its authors report it "significantly outperforms existing
+methods" on those datasets. Not confirmed, and explicitly flagged here
+rather than assumed either way: whether its reported evaluation includes
+a dataset genuinely held out from training and tuning in the sense this
+thesis's Stage 5 (Section 4.6) insists on, or whether its four datasets
+are used in a more conventional same-distribution split; its exact
+authorship; and whether DARPA2000 specifically is among its four
+evaluation datasets, which — if confirmed — would make a direct,
+side-by-side numeric comparison against this thesis's Section 5.4 table
+possible. Until those points are checked against the primary source, the
+defensible comparison to draw is architectural and methodological, not
+numeric: GRAIN reasons over a full alert causal graph via a GNN, where
+this thesis's DQN makes a single pairwise link/don't-link decision over a
+compact, seven-feature, hand-auditable state (Section 3.5) — a
+representational-power-versus-leakage-auditability tradeoff in opposite
+directions — and this thesis's central contribution remains the
+*disclosed* generalization gap between same-distribution and external
+evaluation (Section 6.1), which is a property of how a result was
+obtained and reported, not of which architecture produced it. That
+property is what should anchor a comparison to GRAIN, once its own
+evaluation protocol is confirmed, rather than a bare comparison of
+headline metric values.
 
 # Chapter 3 — System Design
 
@@ -1914,6 +1974,31 @@ this document.*
   Application of Deep Reinforcement Learning to Intrusion Detection for
   Supervised Problems. *Expert Systems with Applications*, 141. (RL-based
   intrusion detection, Section 2.6 — verify exact volume/pages.)
+- Wang, X., Yang, X., Liang, X., Zhang, X., Zhang, W., & Gong, X. (2024).
+  Combating Alert Fatigue with AlertPro: Context-Aware Alert Prioritization
+  Using Reinforcement Learning for Multi-Step Attack Detection. *Computers
+  & Security*, 137, 103583. (RL-based alert prioritization, closest
+  published work to this thesis on the alert-fatigue motivation, Section
+  2.1, Section 2.6 — author list and venue found via search and cross-
+  referenced against a dblp record at the time of writing, but not
+  independently verified against the publisher; verify before final
+  citation.)
+- [AUTHORS UNCONFIRMED] (2024). GRAIN: Graph Neural Network and
+  Reinforcement Learning Aided Causality Discovery for Multi-Step Attack
+  Scenario Reconstruction. *Computers & Security*, 148, 104180. (The
+  closest published work to this thesis's own correlation approach —
+  RL applied directly to multi-step alert correlation, Section 2.2,
+  Section 2.6, Section 2.8. Title, venue, volume, and DOI were located via
+  search; the author list could NOT be independently confirmed during this
+  review — automated retrieval of the publisher page and a dblp lookup
+  both failed — and is deliberately left unfilled here rather than
+  guessed. Do not cite this entry in a submitted thesis without first
+  pulling the full record directly from the DOI
+  (10.1016/j.cose.2024.104180) or the journal. Its exact evaluation
+  protocol — whether results are reported on a genuinely external holdout
+  or same-distribution splits of its four benchmark datasets, and whether
+  DARPA2000 is among them — is also unconfirmed; see Section 2.8 for what
+  this means for using it as a comparison point.)
 - Watkins, C. J. C. H., & Dayan, P. (1992). Q-learning. *Machine Learning*,
   8(3–4), 279–292. (Section 2.4.)
 - Sutton, R. S., & Barto, A. G. (2018). *Reinforcement Learning: An
