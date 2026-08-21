@@ -288,10 +288,13 @@ supervised or unsupervised learning directly to the correlation problem —
 clustering alerts (e.g., root-cause-analysis-oriented alarm clustering
 approaches such as Julisch's work on clustering intrusion-detection
 alarms) or, more recently, applying deep learning to alert-sequence data.
-The closest published work to this thesis's own approach is GRAIN
-(*Computers & Security*, Vol. 148, 2024 — author list not independently
-confirmed during this review and deliberately not stated here rather than
-guessed; verify directly from the publisher record before citing further),
+The closest published work to this thesis's own approach is GRAIN (Xiao,
+Chen, Yang, He, Jiang, Tan, and Jin, 2024 — author list confirmed directly
+against Semantic Scholar's Crossref-backed record, DBLP, and a co-author's
+own faculty publication page; its exact evaluation protocol was not
+similarly confirmed, since the paper itself is closed-access and no
+abstract or full text could be retrieved through any legitimate channel —
+verify directly against the paper before citing its results further),
 which builds a
 graph neural network over an alert causal graph and uses reinforcement
 learning to screen the causal graph down to the authentic multi-step
@@ -509,24 +512,31 @@ strong same-distribution result that does not transfer externally — is
 offered as direct empirical evidence for why that evaluation methodology
 matters, not only as a caveat about this particular model.
 
-GRAIN (Section 2.2) is the closest published work identified during this
-project's literature review, and the honest positioning claim is narrower
-than "no prior work applies RL to alert correlation": that claim is false
-once GRAIN is accounted for. What could and could not be confirmed about
-it during this review matters for how it should be used in a defense.
-Confirmed, from published summaries: it uses a GNN plus RL to reconstruct
-multi-step attack scenarios by screening a causal graph of alerts down to
-an authentic attack path, evaluated across four public multi-step-attack
+GRAIN (Xiao et al., 2024 — Section 2.2) is the closest published work
+identified during this project's literature review, and the honest
+positioning claim is narrower than "no prior work applies RL to alert
+correlation": that claim is false once GRAIN is accounted for. What could
+and could not be confirmed about it during this review matters for how it
+should be used in a defense. Confirmed, cross-checked against Semantic
+Scholar's Crossref-backed metadata, DBLP, and a co-author's own faculty
+publication page (three independent sources agreeing): its full author
+list, exact venue, volume, and article number. Confirmed from published
+summaries of its abstract: it uses a GNN plus RL to reconstruct multi-step
+attack scenarios by screening a causal graph of alerts down to an
+authentic attack path, evaluated across four public multi-step-attack
 datasets, and its authors report it "significantly outperforms existing
 methods" on those datasets. Not confirmed, and explicitly flagged here
-rather than assumed either way: whether its reported evaluation includes
-a dataset genuinely held out from training and tuning in the sense this
-thesis's Stage 5 (Section 4.6) insists on, or whether its four datasets
-are used in a more conventional same-distribution split; its exact
-authorship; and whether DARPA2000 specifically is among its four
-evaluation datasets, which — if confirmed — would make a direct,
-side-by-side numeric comparison against this thesis's Section 5.4 table
-possible. Until those points are checked against the primary source, the
+rather than assumed either way, because the paper itself is closed-access
+and neither an abstract nor full text could be retrieved through any
+legitimate channel during this review: whether its reported evaluation
+includes a dataset genuinely held out from training and tuning in the
+sense this thesis's Stage 5 (Section 4.6) insists on, or whether its four
+datasets are used in a more conventional same-distribution split; and
+whether DARPA2000 specifically is among its four evaluation datasets,
+which — if confirmed — would make a direct, side-by-side numeric
+comparison against this thesis's Section 5.4 table possible. Until those
+two points are checked against the primary source (which requires
+institutional access this review did not have), the
 defensible comparison to draw is architectural and methodological, not
 numeric: GRAIN reasons over a full alert causal graph via a GNN, where
 this thesis's DQN makes a single pairwise link/don't-link decision over a
@@ -1983,22 +1993,27 @@ this document.*
   referenced against a dblp record at the time of writing, but not
   independently verified against the publisher; verify before final
   citation.)
-- [AUTHORS UNCONFIRMED] (2024). GRAIN: Graph Neural Network and
-  Reinforcement Learning Aided Causality Discovery for Multi-Step Attack
-  Scenario Reconstruction. *Computers & Security*, 148, 104180. (The
-  closest published work to this thesis's own correlation approach —
-  RL applied directly to multi-step alert correlation, Section 2.2,
-  Section 2.6, Section 2.8. Title, venue, volume, and DOI were located via
-  search; the author list could NOT be independently confirmed during this
-  review — automated retrieval of the publisher page and a dblp lookup
-  both failed — and is deliberately left unfilled here rather than
-  guessed. Do not cite this entry in a submitted thesis without first
-  pulling the full record directly from the DOI
-  (10.1016/j.cose.2024.104180) or the journal. Its exact evaluation
+- Xiao, F., Chen, S., Yang, J., He, H., Jiang, X., Tan, X., & Jin, D.
+  (2024). GRAIN: Graph Neural Network and Reinforcement Learning Aided
+  Causality Discovery for Multi-Step Attack Scenario Reconstruction.
+  *Computers & Security*, 148, 104180. (The closest published work to
+  this thesis's own correlation approach — RL applied directly to
+  multi-step alert correlation, Section 2.2, Section 2.6, Section 2.8.
+  Author list, venue, volume, and article number cross-confirmed against
+  three independent sources — Semantic Scholar's Crossref-backed record,
+  DBLP (which lists this as a 2025-volume publication against Elsevier's
+  October 2024 online-first date — both years appear across sources,
+  verify which is correct for formal citation), and co-author Huasen He's
+  own USTC faculty publication page — so authorship itself should be
+  reliable. What remains unconfirmed: the paper is closed-access, and
+  neither its abstract nor full text could be retrieved through any
+  legitimate channel during this review, so its exact evaluation
   protocol — whether results are reported on a genuinely external holdout
   or same-distribution splits of its four benchmark datasets, and whether
-  DARPA2000 is among them — is also unconfirmed; see Section 2.8 for what
-  this means for using it as a comparison point.)
+  DARPA2000 is among them — is unverified. Do not cite specific numeric
+  results from this paper without first reading it directly via
+  institutional access; see Section 2.8 for what this means for using it
+  as a comparison point.)
 - Watkins, C. J. C. H., & Dayan, P. (1992). Q-learning. *Machine Learning*,
   8(3–4), 279–292. (Section 2.4.)
 - Sutton, R. S., & Barto, A. G. (2018). *Reinforcement Learning: An
