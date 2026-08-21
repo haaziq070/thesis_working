@@ -1,6 +1,6 @@
 ---
 title: "Reinforcement Learning-Based Adaptive Alert Correlation for Detecting Multi-Stage Cyber Attacks"
-author: "Aazim Rasool"
+author: "Haaziq Rasool"
 date: "August 2026"
 ---
 
